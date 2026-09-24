@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastWindow - App</title>
+<style>
+  :root { --bg:#100d14; --card:#1a1522; --edge:#2f2740; --ink:#efeaf5; --dim:#a398b5; --accent:#a78bfa; --good:#5ecf7a; --warn:#ffcf3c; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; padding:28px 18px 60px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:22px; }
+  h1 { font-size:1.5rem; } h1 .w { color:var(--accent); }
+  a.home { color:var(--dim); text-decoration:none; font-size:0.9rem; }
+  section { background:var(--card); border:1px solid var(--edge); border-radius:14px; padding:20px; margin-bottom:20px; }
+  h2 { font-size:1.05rem; margin-bottom:14px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .field { display:flex; flex-direction:column; gap:5px; flex:1; min-width:140px; }
+  label { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.6px; color:var(--dim); }
+  select, button { font:inherit; border-radius:8px; border:1px solid var(--edge); padding:10px 12px; background:#100d14; color:var(--ink); }
+  select:focus { outline:none; border-color:var(--accent); }
+  button { cursor:pointer; background:var(--accent); border:none; color:#1e1033; font-weight:700; }
+  button:hover { filter:brightness(1.1); }
+  button.ghost { background:transparent; border:1px solid var(--edge); color:var(--dim); font-weight:400; }
+  button.ghost:hover { color:var(--ink); border-color:var(--accent); }
+  .clock { text-align:center; padding:8px 0; }
+  .clock .big { font-size:3.2rem; font-weight:800; letter-spacing:-1px; color:var(--accent); }
+  .clock.eating .big { color:var(--good); }
+  .clock .sub { color:var(--dim); margin-top:6px; font-size:0.95rem; }
+  .bar { height:10px; border-radius:999px; background:#100d14; border:1px solid var(--edge); overflow:hidden; margin-top:14px; }
+  .bar i { display:block; height:100%; background:var(--accent); transition:width .4s; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+  .stat { background:#100d14; border:1px solid var(--edge); border-radius:10px; padding:14px; }
+  .stat .v { font-size:1.35rem; font-weight:700; color:var(--accent); }
+  .stat .l { color:var(--dim); font-size:0.78rem; margin-top:3px; }
+  .log { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--edge); flex-wrap:wrap; }
+  .log:last-child { border-bottom:none; }
+  .log .t { font-weight:600; min-width:110px; }
+  .log .meta { color:var(--dim); font-size:0.85rem; flex:1; }
+  .log button.act { background:transparent; border:1px solid var(--edge); color:var(--dim); font-weight:400; font-size:0.8rem; padding:5px 10px; }
+  .log button.act:hover { color:var(--ink); border-color:var(--accent); }
+  .empty { color:var(--dim); text-align:center; padding:16px; font-size:0.95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fast<span class="w">Window</span></h1>
+    <a class="home" href="index.html">&larr; Home</a>
+  </header>
+
+  <section id="setup-section">
+    <h2>Start a fast</h2>
+    <div class="row">
+      <div class="field"><label>Protocol</label><select id="f-protocol"></select></div>
+      <div class="field" style="flex:0 0 auto; justify-content:flex-end"><button id="f-start">Start fast</button></div>
+    </div>
+  </section>
+
+  <section id="clock-section" style="display:none">
+    <h2>Current fast</h2>
+    <div class="clock" id="clock">
+      <div class="big" id="clock-big">--</div>
+      <div class="sub" id="clock-sub"></div>
+    </div>
+    <div class="bar"><i id="bar-fill" style="width:0%"></i></div>
+    <div class="row" style="margin-top:14px">
+      <button id="f-finish">End fast now</button>
+      <button class="ghost" id="f-abandon">Abandon (do not count)</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your record</h2>
+    <div class="stats">
+      <div class="stat"><div class="v" id="s-count">0</div><div class="l">completed fasts</div></div>
+      <div class="stat"><div class="v" id="s-total">0h</div><div class="l">total hours fasted</div></div>
+      <div class="stat"><div class="v" id="s-avg">0h</div><div class="l">average fast</div></div>
+      <div class="stat"><div class="v" id="s-longest">0h</div><div class="l">longest fast</div></div>
+      <div class="stat"><div class="v" id="s-streak">0</div><div class="l">day streak</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>History</h2>
+    <div id="list"><div class="empty">No completed fasts yet.</div></div>
+  </section>
+</div>
+
+<script src="engine.js"></script>
+<script>
+(function () {
+  var KEY = 'fastwindow-fasts';
+  var PREF = 'fastwindow-prefs';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
+  function save(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
+  function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF)) || {}; } catch (e) { return {}; } }
+  function savePrefs(p) { localStorage.setItem(PREF, JSON.stringify(p)); }
+
+  var sel = $('f-protocol');
+  FastEngine.PROTOCOLS.forEach(function (p) {
+    var o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.label;
+    sel.appendChild(o);
+  });
+  var prefs = loadPrefs();
+  sel.value = prefs.protocol || '16:8';
+
+  function fmtClock(d) { return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function fmtDay(d) { return d.toLocaleDateString([], { month: 'short', day: 'numeric' }); }
+
+  var timer = null;
+
+  function openFast(fasts) {
+    for (var i = fasts.length - 1; i >= 0; i--) if (!fasts[i].completed) return fasts[i];
+    return null;
+  }
+
+  function render() {
+    savePrefs({ protocol: sel.value });
+    var fasts = load();
+    var now = new Date();
+    var cur = openFast(fasts);
+
+    var h = FastEngine.history(fasts);
+    $('s-count').textContent = h.completed;
+    $('s-total').textContent = h.totalHours + 'h';
+    $('s-avg').textContent = h.avgHours + 'h';
+    $('s-longest').textContent = h.longestHours + 'h';
+    $('s-streak').textContent = FastEngine.streak(fasts, now);
+
+    if (cur) {
+      $('setup-section').style.display = 'none';
+      $('clock-section').style.display = 'block';
+      var st = FastEngine.status(cur, now);
+      var clock = $('clock');
+      clock.className = 'clock ' + (st.state === 'eating' ? 'eating' : 'fasting');
+      if (st.state === 'fasting') {
+        $('clock-big').textContent = FastEngine.fmtDuration(st.minutesLeft);
+        $('clock-sub').textContent = 'Fasting ' + cur.fastHours + 'h - window opens at ' + fmtClock(st.endsAt) + ' (' + st.elapsedHours + 'h in).';
+      } else {
+        $('clock-big').textContent = 'Window open';
+        $('clock-sub').textContent = st.overtimeMin > 0
+          ? 'Target reached ' + FastEngine.fmtDuration(st.overtimeMin) + ' ago - eat when ready, or keep going.'
+          : 'Target reached - your eating window is open.';
+      }
+      $('bar-fill').style.width = st.pct + '%';
+    } else {
+      $('setup-section').style.display = 'block';
+      $('clock-section').style.display = 'none';
+    }
+
+    var done = fasts.filter(function (f) { return f.completed; });
+    var list = $('list');
+    list.innerHTML = '';
+    if (!done.length) list.innerHTML = '<div class="empty">No completed fasts yet.</div>';
+    done.slice().reverse().slice(0, 14).forEach(function (f) {
+      var hrs = Math.round((new Date(f.endedAt) - new Date(f.startedAt)) / 360000) / 10;
+      var row = document.createElement('div');
+      row.className = 'log';
+      row.innerHTML = '<span class="t">' + fmtDay(new Date(f.endedAt)) + '</span>' +
+        '<span class="meta">' + hrs + 'h fasted (' + f.fastHours + 'h target)</span>' +
+        '<button class="act">Remove</button>';
+      row.querySelector('button').addEventListener('click', function () {
+        save(load().filter(function (y) { return y.id !== f.id; }));
+        render();
+      });
+      list.appendChild(row);
+    });
+
+    if (timer) clearInterval(timer);
+    timer = setInterval(render, 30000);
+  }
+
+  $('f-start').addEventListener('click', function () {
+    var p = FastEngine.protocolById(sel.value);
+    if (!p) return;
+    var fasts = load();
+    fasts.push({ id: 'f' + Date.now(), startedAt: new Date().toISOString(), fastHours: p.fastHours, endedAt: null, completed: false });
+    save(fasts);
+    render();
+  });
+
+  $('f-finish').addEventListener('click', function () {
+    var fasts = load();
+    var cur = openFast(fasts);
+    if (!cur) return;
+    cur.endedAt = new Date().toISOString();
+    cur.completed = true;
+    save(fasts);
+    render();
+  });
+
+  $('f-abandon').addEventListener('click', function () {
+    var fasts = load();
+    var cur = openFast(fasts);
+    if (!cur) return;
+    save(fasts.filter(function (y) { return y.id !== cur.id; }));
+    render();
+  });
+
+  sel.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
