@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastWindow - Your fasting window, always visible</title>
+<style>
+  :root { --bg:#100d14; --card:#1a1522; --edge:#2f2740; --ink:#efeaf5; --dim:#a398b5; --accent:#a78bfa; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:48px 20px; }
+  .wrap { max-width:680px; width:100%; }
+  h1 { font-size:2.4rem; letter-spacing:-0.5px; }
+  h1 .w { color:var(--accent); }
+  p.lede { color:var(--dim); margin:16px 0 28px; font-size:1.1rem; line-height:1.55; }
+  .feats { display:grid; gap:12px; margin-bottom:32px; }
+  .feat { background:var(--card); border:1px solid var(--edge); border-radius:12px; padding:16px 18px; }
+  .feat b { color:var(--accent); }
+  .feat p { color:var(--dim); font-size:0.95rem; margin-top:4px; }
+  a.cta { display:inline-block; background:var(--accent); color:#1e1033; font-weight:700; padding:14px 34px; border-radius:10px; text-decoration:none; font-size:1.05rem; }
+  a.cta:hover { filter:brightness(1.1); }
+  .foot { color:var(--dim); font-size:0.85rem; margin-top:36px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fast<span class="w">Window</span></h1>
+  <p class="lede">Intermittent fasting lives and dies by one question: "can I eat yet?" FastWindow answers it at a glance - your protocol, your live countdown, and the history that proves the habit is sticking.</p>
+  <div class="feats">
+    <div class="feat"><b>Five protocols, zero setup</b><p>14:10, 16:8, 18:6, 20:4 and OMAD. Tap one, start your fast, done.</p></div>
+    <div class="feat"><b>A countdown that tells the truth</b><p>Hours left, percent through, and the exact clock time your eating window opens. Overtime counts too, if you push past your target.</p></div>
+    <div class="feat"><b>Proof over time</b><p>Completed fasts, total and average hours, your longest fast, and a day streak that forgives today while it is still in progress.</p></div>
+    <div class="feat"><b>Private by design</b><p>No account, no cloud. Everything stays in your browser's local storage.</p></div>
+  </div>
+  <a class="cta" href="app.html">Open FastWindow</a>
+  <p class="foot">Runs fully offline after load. Part of the App Factory experiment - a new app every hour.</p>
+</div>
+</body>
+</html>
